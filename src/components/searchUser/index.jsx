@@ -21,32 +21,33 @@ const fetchOptions = debounce(async (inputValue, callback) => {
 }, 300);
 
 const SearchUser = (props) => {
-  const { onSelect } = props;
+  const { onSelect, onClear } = props;
 
   const [value, setValue] = React.useState(null);
   const [inputValue, setInputValue] = React.useState("");
   const [options, setOptions] = React.useState([]);
 
   React.useEffect(() => {
+    if (!inputValue) onClear(null);
+
     fetchOptions(inputValue, setOptions);
   }, [inputValue]);
 
   return (
     <Autocomplete
-      id="google-map-demo"
-      style={{ width: 300 }}
+      className="autocomplete"
       getOptionLabel={(option) => option.login}
       filterOptions={(x) => x}
       options={options}
       autoComplete
       freeSolo
-      // includeInputInList
       filterSelectedOptions
       value={value}
       onChange={(event, newValue) => {
         setOptions(newValue ? [newValue, ...options] : options);
         setValue(newValue);
 
+        if (!newValue) return;
         const { login } = newValue;
         onSelect(login);
       }}
@@ -68,6 +69,11 @@ const SearchUser = (props) => {
 
 SearchUser.propTypes = {
   onSelect: PropTypes.func.isRequired,
+  onClear: PropTypes.func,
+};
+
+SearchUser.defaultProps = {
+  onClear: () => {},
 };
 
 export default SearchUser;
