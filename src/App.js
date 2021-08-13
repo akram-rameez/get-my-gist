@@ -1,17 +1,8 @@
 import React from "react";
 import logo from "./logo.svg";
 import "./App.css";
-import ReqestHandler from "./utils/requestHandler";
 
 function App() {
-  React.useEffect(() => {
-    ReqestHandler.fetch(
-      "/search/users",
-      { method: "GET" },
-      { q: "akram-rameez" }
-    );
-  }, []);
-
   return (
     <div className="App">
       <header className="App-header">
