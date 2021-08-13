@@ -44,7 +44,13 @@ class ProjectRequestHandler {
         : {}),
     });
 
-    return response;
+    try {
+      return response.json();
+    } catch (err) {
+      console.log(err);
+    }
+
+    return null;
   }
 }
 
