@@ -43,7 +43,6 @@ const SearchUser = (props) => {
       // includeInputInList
       filterSelectedOptions
       value={value}
-      onSelect={console.log}
       onChange={(event, newValue) => {
         setOptions(newValue ? [newValue, ...options] : options);
         setValue(newValue);
