@@ -8,7 +8,7 @@ function App() {
 
   return (
     <div className="App">
-      {!user && <SearchUser onSuccessfulSearch={setUser} />}
+      {!user && <SearchUser onSelect={setUser} />}
       {user}
       {!!user && <GistList username={user} />}
     </div>

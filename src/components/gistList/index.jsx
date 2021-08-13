@@ -1,14 +1,15 @@
 import React from "react";
 import PropTypes from "prop-types";
+import debounce from "lodash/debounce";
 import RequestHandler from "../../utils/requestHandler";
 
-const getGists = async (username, from, callback) => {
+const getGists = debounce(async (username, from, callback) => {
   const response = await RequestHandler.fetch(`/users/${username}/gists`, {
     method: "GET",
   });
 
   callback(response);
-};
+}, 500);
 
 const GistList = (props) => {
   const { username } = props;

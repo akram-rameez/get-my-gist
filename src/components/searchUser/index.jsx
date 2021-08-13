@@ -1,54 +1,74 @@
 import React from "react";
 import PropTypes from "prop-types";
+import TextField from "@material-ui/core/TextField";
+import Autocomplete from "@material-ui/lab/Autocomplete";
+import debounce from "lodash/debounce";
 import RequestHandler from "../../utils/requestHandler";
 
-const SearchUser = (props) => {
-  const { onSuccessfulSearch } = props;
-  const [error, setError] = React.useState("");
+const fetchOptions = debounce(async (inputValue, callback) => {
+  if (inputValue === "") return callback([]);
 
-  const onFormSubmit = React.useCallback(
-    async (e) => {
-      e.preventDefault();
-
-      const formData = new FormData(e.target);
-      const username = formData.get("username");
-
-      const searchResult = await RequestHandler.fetch(
-        "/search/users",
-        { method: "GET" },
-        { q: username }
-      );
-
-      const { total_count: totalCount, items } = searchResult;
-      if (totalCount === 1) {
-        setError("");
-
-        const [{ login }] = items;
-        onSuccessfulSearch(login);
-      } else if (totalCount > 0) {
-        setError("multiple users found");
-      } else {
-        setError("no user found");
-      }
-    },
-    [onSuccessfulSearch]
+  const response = await RequestHandler.fetch(
+    "/search/users",
+    { method: "GET" },
+    { q: inputValue }
   );
 
+  const { items } = response;
+  if (!items) return callback([]);
+
+  return callback(items);
+}, 300);
+
+const SearchUser = (props) => {
+  const { onSelect } = props;
+
+  const [value, setValue] = React.useState(null);
+  const [inputValue, setInputValue] = React.useState("");
+  const [options, setOptions] = React.useState([]);
+
+  React.useEffect(() => {
+    fetchOptions(inputValue, setOptions);
+  }, [inputValue]);
+
   return (
-    <form onSubmit={onFormSubmit}>
-      <input type="string" required name="username" />
-      <button type="submit">Search</button>
-      <div>{error}</div>
-    </form>
+    <Autocomplete
+      id="google-map-demo"
+      style={{ width: 300 }}
+      getOptionLabel={(option) => option.login}
+      filterOptions={(x) => x}
+      options={options}
+      autoComplete
+      freeSolo
+      // includeInputInList
+      filterSelectedOptions
+      value={value}
+      onSelect={console.log}
+      onChange={(event, newValue) => {
+        setOptions(newValue ? [newValue, ...options] : options);
+        setValue(newValue);
+
+        const { login } = newValue;
+        onSelect(login);
+      }}
+      onInputChange={(event, newInputValue) => {
+        setInputValue(newInputValue);
+      }}
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          label="Enter Username"
+          variant="outlined"
+          fullWidth
+        />
+      )}
+      renderOption={(option) => <div>{option.login}</div>}
+    />
   );
 };
 
 SearchUser.propTypes = {
-  onSuccessfulSearch: PropTypes.func,
-};
-
-SearchUser.defaultProps = {
-  onSuccessfulSearch: (...args) => console.log(args),
+  onSelect: PropTypes.func.isRequired,
 };
 
 export default SearchUser;
