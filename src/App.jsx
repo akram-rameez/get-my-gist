@@ -34,11 +34,9 @@ function App() {
           </Typography>
         </Toolbar>
       </AppBar>
-      <Container>
-        <div>
-          {<SearchUser onSelect={setUser} onClear={onClear} />}
-          {!!user && <GistList username={user} />}
-        </div>
+      <Container className="app-root" height="100%">
+        {<SearchUser onSelect={setUser} onClear={onClear} />}
+        {!!user && <GistList key={user} username={user} />}
       </Container>
     </div>
   );

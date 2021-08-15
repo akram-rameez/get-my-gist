@@ -1,4 +1,14 @@
-.autocomplete {
+.app-root {
+    display: flex;
+    flex-direction: column;
+}
+
+.app-root .autocomplete {
     margin: 0 auto;
     margin-top: 10px;
+}
+
+.app-root .data-grid {
+    margin-top: 10px;
+    flex: 1
 }
