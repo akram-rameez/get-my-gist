@@ -1,23 +1,13 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { GridOverlay, DataGrid } from "@material-ui/data-grid";
-import { Chip, LinearProgress } from "@material-ui/core";
 import RequestHandler from "../../utils/requestHandler";
+// import Grid from "./datagridList";
+import AccordionList from "./accordionList";
 
-function CustomLoadingOverlay() {
-  return (
-    <GridOverlay>
-      <div style={{ position: "absolute", top: 0, width: "100%" }}>
-        <LinearProgress />
-      </div>
-    </GridOverlay>
-  );
-}
-
-const getForksForGist = (forkURL) => {
-  const cleanURL = forkURL.replace("https://api.github.com", "");
-  return RequestHandler.fetch(cleanURL, { method: "GET" });
-};
+// const getForksForGist = (forkURL) => {
+//   const cleanURL = forkURL.replace("https://api.github.com", "");
+//   return RequestHandler.fetch(cleanURL, { method: "GET" });
+// };
 
 const getGists = async (username, from, callback) => {
   let page = 1;
@@ -34,14 +24,15 @@ const getGists = async (username, from, callback) => {
       { per_page: perPage, page }
     );
 
-    const forkList = Promise.all(
-      response.map((row) => {
-        const { forks_url: forkURL } = row;
-        return getForksForGist(forkURL);
-      })
-    );
+    // const forkList = Promise.all(
+    //   response.map((row) => {
+    //     const { forks_url: forkURL } = row;
+    //     return getForksForGist(forkURL);
+    //   })
+    // );
 
-    forks = [...forks, ...response.map((row) => ({ ...row, forkList }))];
+    forks = [...forks, ...response];
+    // forks = [...forks, ...response.map((row) => ({ ...row, forkList }))];
 
     if (response.length < 50) {
       break;
@@ -53,63 +44,37 @@ const getGists = async (username, from, callback) => {
   callback(forks);
 };
 
-const columns = [
-  { field: "id", headerName: "ID", width: 150 },
-  {
-    field: "description",
-    headerName: "Description",
-    editable: false,
-    flex: 1,
-    minWidth: 200,
-  },
-  {
-    field: "fileTypes",
-    headerName: "File Types",
-    valueGetter: (params) => {
-      const { row: { files = {} } = {} } = params;
-
-      const fileNames = Object.keys(files);
-      return fileNames.map((x) => files[x].language).filter(Boolean);
-    },
-    renderCell: (params) => {
-      const { value } = params;
-
-      return value.map((label) => (
-        <Chip style={{ marginRight: 10 }} label={label} />
-      ));
-    },
-    flex: 1,
-    minWidth: 200,
-  },
-];
-
 const GistList = (props) => {
   const { username } = props;
   // eslint-disable-next-line no-unused-vars
-  const [gists, setGists] = React.useState([]);
+  const [gists, setGists] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+  const [gistForkMap, updateGistForksMap] = React.useReducer(
+    (state, action) => {
+      const { id, data } = action;
+      return { ...state, [id]: data };
+    },
+    {}
+  );
 
   React.useEffect(() => {
     getGists(username, 0, setGists);
+    setLoading(false);
+
     return () => {
       setGists(null);
+      setLoading(true);
     };
   }, [username]);
 
+  // return <Grid gists={gists} loading={loading} />;
   return (
-    <div style={{ height: 500 }}>
-      <DataGrid
-        className="data-grid"
-        components={{
-          LoadingOverlay: CustomLoadingOverlay,
-        }}
-        loading={!gists}
-        rows={gists}
-        columns={columns}
-        pageSize={5}
-        rowsPerPageOptions={[5]}
-        disableSelectionOnClick
-      />
-    </div>
+    <AccordionList
+      gists={gists}
+      loading={loading}
+      gistForkMap={gistForkMap}
+      updateGistForksMap={updateGistForksMap}
+    />
   );
 };
 
