@@ -1,22 +1,22 @@
 import React from "react";
 import PropTypes from "prop-types";
-import RequestHandler from "../../utils/requestHandler";
 // import Grid from "./datagridList";
 import AccordionList from "./accordionList";
+import RequestHandlerContext from "../../context/requestHandler";
 
 // const getForksForGist = (forkURL) => {
 //   const cleanURL = forkURL.replace("https://api.github.com", "");
 //   return RequestHandler.fetch(cleanURL, { method: "GET" });
 // };
 
-const getGists = async (username, from, callback) => {
+const getGists = async (username, fetcher, callback) => {
   let page = 1;
   const perPage = 50;
   let forks = [];
 
   for (;;) {
     // eslint-disable-next-line no-await-in-loop
-    const response = await RequestHandler.fetch(
+    const response = await fetcher.fetch(
       `/users/${username}/gists`,
       {
         method: "GET",
@@ -31,6 +31,10 @@ const getGists = async (username, from, callback) => {
     //   })
     // );
 
+    if (!response) {
+      return callback(forks);
+    }
+
     forks = [...forks, ...response];
     // forks = [...forks, ...response.map((row) => ({ ...row, forkList }))];
 
@@ -41,7 +45,7 @@ const getGists = async (username, from, callback) => {
     }
   }
 
-  callback(forks);
+  return callback(forks);
 };
 
 const GistList = (props) => {
@@ -57,8 +61,10 @@ const GistList = (props) => {
     {}
   );
 
+  const requestHandler = React.useContext(RequestHandlerContext);
+
   React.useEffect(() => {
-    getGists(username, 0, setGists);
+    getGists(username, requestHandler, setGists);
     setLoading(false);
 
     return () => {

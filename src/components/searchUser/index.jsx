@@ -3,18 +3,18 @@ import PropTypes from "prop-types";
 import TextField from "@material-ui/core/TextField";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import debounce from "lodash/debounce";
-import RequestHandler from "../../utils/requestHandler";
+import RequestHandlerContext from "../../context/requestHandler";
 
-const fetchOptions = debounce(async (inputValue, callback) => {
+const fetchOptions = debounce(async (inputValue, callback, requestHandler) => {
   if (inputValue === "") return callback([]);
 
-  const response = await RequestHandler.fetch(
+  const response = await requestHandler.fetch(
     "/search/users",
     { method: "GET" },
     { q: inputValue }
   );
 
-  const { items } = response;
+  const { items } = response || {};
   if (!items) return callback([]);
 
   return callback(items);
@@ -27,16 +27,21 @@ const SearchUser = (props) => {
   const [inputValue, setInputValue] = React.useState("");
   const [options, setOptions] = React.useState([]);
 
+  const requestHandler = React.useContext(RequestHandlerContext);
+
   React.useEffect(() => {
     if (!inputValue) onClear(null);
 
-    fetchOptions(inputValue, setOptions);
+    fetchOptions(inputValue, setOptions, requestHandler);
   }, [inputValue]);
 
   return (
     <Autocomplete
       className="autocomplete"
-      getOptionLabel={(option) => option.login}
+      getOptionLabel={(option) => {
+        if (!option.login) return option;
+        return option.login;
+      }}
       filterOptions={(x) => x}
       options={options}
       autoComplete

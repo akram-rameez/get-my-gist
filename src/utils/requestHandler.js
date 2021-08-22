@@ -1,36 +1,33 @@
 import { API_HOST } from "../constants";
 
-const millisecondsInAnHour = 60 * 60 * 1000;
-
-function generateRequestTimestamp(args) {
-  return {
-    ...args,
-    time: Date.now(),
-  };
-}
-
 class ProjectRequestHandler {
-  constructor() {
-    this.requestsLog = [];
+  constructor(onError) {
+    this.onError = onError;
   }
 
-  async fetch(url, options = {}, data = {}) {
-    if (this.requestsLog.length) {
-      const [firstRequest, ...rest] = this.requestsLog;
-      const { time } = firstRequest;
-
-      if (Date.now() - time < millisecondsInAnHour) {
-        this.requestLog = rest;
-      } else {
-        // eslint-disable-next-line no-console
-        console.warn(
-          `Already completed ${this.requestlog.length} requests in throttle window`
-        );
-      }
+  async _requestErrorHandler(error, response) {
+    if (error) {
+      return this.onError(error);
     }
 
-    this.requestsLog.push(generateRequestTimestamp({ url }));
+    try {
+      const body = await response.json();
 
+      if (body.message) {
+        const { message } = body;
+        if (message.indexOf("API rate limit exceeded") > -1) {
+          return this.onError(new Error("RateLimitExceeded"));
+        }
+      }
+    } catch (err) {
+      return this.onError(new Error("UnknownError"));
+    }
+
+    return this.onError(null);
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  async fetch(url, options = {}, data = {}) {
     const { method } = options;
     const fetchURL = new URL(`${API_HOST}${url}`);
     if (method === "GET") {
@@ -44,16 +41,21 @@ class ProjectRequestHandler {
         : {}),
     });
 
+    const { status } = response;
+    if (status >= 400) {
+      return this._requestErrorHandler(null, response);
+    }
+
     try {
       return response.json();
     } catch (err) {
-      console.log(err);
+      return this.onError(new Error("UnknownError"));
     }
-
-    return null;
   }
 }
 
-const RequestHandler = new ProjectRequestHandler();
+function getRequestHandler(onError) {
+  return new ProjectRequestHandler(onError);
+}
 
-export default RequestHandler;
+export default getRequestHandler;

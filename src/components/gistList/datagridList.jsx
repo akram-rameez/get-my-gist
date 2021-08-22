@@ -2,7 +2,6 @@ import React from "react";
 import PropTypes from "prop-types";
 import { GridOverlay, DataGrid } from "@material-ui/data-grid";
 import { Chip, LinearProgress } from "@material-ui/core";
-// import RequestHandler from "../../utils/requestHandler";
 
 function CustomLoadingOverlay() {
   return (
@@ -13,11 +12,6 @@ function CustomLoadingOverlay() {
     </GridOverlay>
   );
 }
-
-// const getForksForGist = (forkURL) => {
-//   const cleanURL = forkURL.replace("https://api.github.com", "");
-//   return RequestHandler.fetch(cleanURL, { method: "GET" });
-// };
 
 const columns = [
   { field: "id", headerName: "ID", width: 150 },

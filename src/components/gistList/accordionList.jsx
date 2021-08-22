@@ -11,12 +11,12 @@ import {
 } from "@material-ui/core";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import { makeStyles } from "@material-ui/core/styles";
-import RequestHandler from "../../utils/requestHandler";
+import RequestHandlerContext from "../../context/requestHandler";
 
 // eslint-disable-next-line no-unused-vars
-const getForksForGist = async (forkURL, callback) => {
+const getForksForGist = async (forkURL, fetcher, callback) => {
   const cleanURL = forkURL.replace("https://api.github.com", "");
-  const response = await RequestHandler.fetch(
+  const response = await fetcher.fetch(
     cleanURL,
     { method: "GET" },
     {
@@ -35,7 +35,7 @@ const useStyles = makeStyles((theme) => ({
   },
   heading: {
     fontSize: theme.typography.pxToRem(15),
-    flexBasis: "33.33%",
+    flexBasis: "70%",
     flexShrink: 0,
   },
   secondaryHeading: {
@@ -59,13 +59,18 @@ const ForkContainer = (props) => {
           {data.map((d) => {
             const {
               html_url: url,
-              owner: { avatar_url: image, id, login } = {},
+              owner: { avatar_url: image, id, node_id: nodeId, login } = {},
+              updated_at: updatedAt,
             } = d;
 
             return (
-              <a href={url} target="_blank" rel="noreferrer">
+              <a
+                href={url}
+                target="_blank"
+                rel="noreferrer"
+                key={`${id}-${nodeId}__${updatedAt}`}
+              >
                 <Chip
-                  key={id}
                   avatar={<Avatar alt={login} src={image} />}
                   label={login}
                   color="primary"
@@ -110,6 +115,8 @@ const AccordionList = (props) => {
     setExpanded(isExpanded ? panel : false);
   };
 
+  const requestHandler = React.useContext(RequestHandlerContext);
+
   if (loading) return <LinearProgress />;
 
   return (
@@ -140,7 +147,7 @@ const AccordionList = (props) => {
               aria-controls="panel1bh-content"
               id="panel1bh-header"
             >
-              <Typography className={classes.heading}>
+              <Typography className={classes.heading} key="heading">
                 {description}
                 {!description && (
                   <span style={{ color: "#eaeaea", fontSize: 10 }}>
@@ -148,14 +155,14 @@ const AccordionList = (props) => {
                   </span>
                 )}
               </Typography>
-              <Typography className={classes.secondaryHeading}>
+              <Typography className={classes.secondaryHeading} key="id">
                 <a href={url} target="_blank" rel="noreferrer">
                   {id}
                 </a>
               </Typography>
             </AccordionSummary>
             <AccordionDetails>
-              <Typography>
+              <Typography key="file-types">
                 <div className="filetypes-badges">
                   {(fileTypes || []).map((label) => (
                     <Chip style={{ marginRight: 10 }} label={label} />
@@ -165,7 +172,7 @@ const AccordionList = (props) => {
                   data={gistForkMap[id]}
                   onMount={() => {
                     if (!gistForkMap[id])
-                      getForksForGist(forksURL, (data) =>
+                      getForksForGist(forksURL, requestHandler, (data) =>
                         updateGistForksMap({ id, data })
                       );
                   }}
