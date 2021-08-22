@@ -39,6 +39,9 @@ const useStyles = makeStyles((theme) => ({
     flexShrink: 0,
   },
   secondaryHeading: {
+    flexBasis: "30%",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
     fontSize: theme.typography.pxToRem(15),
     color: theme.palette.text.secondary,
   },
